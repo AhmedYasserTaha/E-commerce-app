@@ -1,4 +1,4 @@
-import 'dart:developer';
+import 'package:e_commerce_app/home/home_screen.dart';
 import 'package:e_commerce_app/widget/app_color.dart';
 import 'package:e_commerce_app/auth/login_screen.dart';
 import 'package:e_commerce_app/widget/custom_text_field.dart';
@@ -148,7 +148,27 @@ class _SingUpScreenState extends State<SingUpScreen>
                     ),
                   );
 
-                  await createAccount(context);
+                  try {
+                    await createAccount(
+                        context); // افترض أن دي الدالة اللي بتعمل إنشاء الحساب
+
+                    // لو تم إنشاء الحساب بنجاح، اغلق الـ dialog
+                    Navigator.of(context).pop();
+
+                    // التوجيه للصفحة الرئيسية بعد تسجيل الحساب بنجاح
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            HomeScreen(userName: name.text), // مرر الاسم هنا
+                      ),
+                    );
+                  } catch (e) {
+                    // لو في خطأ حصل، اعرض رسالة
+                    Navigator.of(context).pop(); // اغلق الـ dialog لو في خطأ
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error: ${e.toString()}')),
+                    );
+                  }
                 }
               },
             ),
@@ -185,10 +205,15 @@ class _SingUpScreenState extends State<SingUpScreen>
 
   Future<void> createAccount(BuildContext context) async {
     try {
+      // إنشاء حساب جديد
       await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: email.text,
         password: password.text,
       );
+
+      // الحصول على المستخدم الحالي وتحديث اسمه
+      User? user = FirebaseAuth.instance.currentUser;
+      await user?.updateDisplayName(name.text);
 
       Navigator.pop(context);
 

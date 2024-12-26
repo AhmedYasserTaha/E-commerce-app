@@ -3,6 +3,7 @@ import 'dart:ui';
 
 class AppColor {
   static const kMainColor = Color(0xff77cbd2);
+  static const barColor = Color(0xff303F9F);
   static const kSecondaryColor = Color(0xFFC7EDE6);
   static const kProductName = 'productName';
   static const kProductPrice = 'productPrice';

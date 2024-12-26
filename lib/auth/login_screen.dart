@@ -1,8 +1,10 @@
-import 'package:e_commerce_app/widget/app_color.dart';
 import 'package:e_commerce_app/auth/sing_up_screen.dart';
-import 'package:e_commerce_app/widget/custom_text_field.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // أضف هذه المكتبة
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:e_commerce_app/home/home_screen.dart';
+import 'package:e_commerce_app/widget/app_color.dart';
+import 'package:e_commerce_app/widget/custom_text_field.dart';
 import 'package:gap/gap.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -19,22 +21,59 @@ class _LoginScreenState extends State<LoginScreen>
   final passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool isLoading = false;
+  bool rememberMe = false; // متغير لحفظ حالة التذكر
 
   late AnimationController _controller;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 1),
-    )..repeat(); // يبدأ الدوران بشكل مستمر.
+    _controller =
+        AnimationController(vsync: this, duration: const Duration(seconds: 1))
+          ..repeat();
+
+    _loadRememberMe();
   }
 
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  _loadRememberMe() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (!mounted) return; // التحقق من حالة Widget
+
+      setState(() {
+        rememberMe = prefs.getBool('rememberMe') ?? false;
+        if (rememberMe) {
+          emailController.text = prefs.getString('email') ?? '';
+          passwordController.text = prefs.getString('password') ?? '';
+        }
+      });
+    } catch (e) {
+      print('Error loading preferences: $e');
+      // يمكنك إضافة معالجة الخطأ هنا
+    }
+  }
+
+  _saveRememberMe() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('rememberMe', rememberMe);
+      if (rememberMe) {
+        await prefs.setString('email', emailController.text);
+        await prefs.setString('password', passwordController.text);
+      } else {
+        await prefs.remove('email');
+        await prefs.remove('password');
+      }
+    } catch (e) {
+      print('Error saving preferences: $e');
+      // يمكنك إضافة معالجة الخطأ هنا
+    }
   }
 
   @override
@@ -94,6 +133,24 @@ class _LoginScreenState extends State<LoginScreen>
                             return null;
                           },
                         ),
+                        const Gap(30),
+                        Row(
+                          children: [
+                            Checkbox(
+                              value: rememberMe,
+                              onChanged: (value) {
+                                setState(() {
+                                  rememberMe = value ?? false;
+                                });
+                              },
+                            ),
+                            const Text(
+                              "Remember Me",
+                              style:
+                                  TextStyle(color: Colors.white, fontSize: 16),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
@@ -106,11 +163,29 @@ class _LoginScreenState extends State<LoginScreen>
                       setState(() {
                         isLoading = true;
                       });
+
                       try {
                         await FirebaseAuth.instance.signInWithEmailAndPassword(
                           email: emailController.text,
                           password: passwordController.text,
                         );
+
+                        // حفظ حالة التذكر
+                        _saveRememberMe();
+
+                        // جلب اسم المستخدم من Firebase
+                        String userName =
+                            FirebaseAuth.instance.currentUser?.displayName ??
+                                "Guest";
+
+                        // التوجيه إلى HomeScreen مع تمرير الاسم
+                        Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                HomeScreen(userName: userName),
+                          ),
+                        );
+
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                               content: Text('Logged in successfully')),
