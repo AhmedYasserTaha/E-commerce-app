@@ -1,4 +1,4 @@
-import 'package:e_commerce_app/app_color.dart';
+import 'package:e_commerce_app/widget/app_color.dart';
 import 'package:e_commerce_app/home/login_screen.dart';
 import 'package:e_commerce_app/home/sing_up_screen.dart';
 import 'package:e_commerce_app/widget/custom_text_field.dart';
