@@ -1,13 +1,13 @@
 import 'package:e_commerce_app/widget/app_color.dart';
-import 'package:e_commerce_app/home/login_screen.dart';
-import 'package:e_commerce_app/home/sing_up_screen.dart';
+import 'package:e_commerce_app/auth/login_screen.dart';
+import 'package:e_commerce_app/auth/sing_up_screen.dart';
 import 'package:e_commerce_app/widget/custom_text_field.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+class StartScreen extends StatelessWidget {
+  const StartScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

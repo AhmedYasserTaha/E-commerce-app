@@ -1,5 +1,5 @@
 import 'package:e_commerce_app/widget/app_color.dart';
-import 'package:e_commerce_app/home/sing_up_screen.dart';
+import 'package:e_commerce_app/auth/sing_up_screen.dart';
 import 'package:e_commerce_app/widget/custom_text_field.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';

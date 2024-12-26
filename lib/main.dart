@@ -1,4 +1,4 @@
-import 'package:e_commerce_app/home/home_screen.dart';
+import 'package:e_commerce_app/auth/start_screen.dart';
 import 'package:e_commerce_app/splash_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
     return const MaterialApp(
       title: 'Flutter Ui',
       debugShowCheckedModeBanner: false,
-      home: HomeScreen(),
+      home: StartScreen(),
     );
   }
 }

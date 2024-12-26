@@ -1,6 +1,6 @@
 import 'dart:developer';
 import 'package:e_commerce_app/widget/app_color.dart';
-import 'package:e_commerce_app/home/login_screen.dart';
+import 'package:e_commerce_app/auth/login_screen.dart';
 import 'package:e_commerce_app/widget/custom_text_field.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
