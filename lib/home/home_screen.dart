@@ -1,3 +1,5 @@
+import 'package:e_commerce_app/cart/cart_screen.dart';
+import 'package:e_commerce_app/profile/profile_screen.dart';
 import 'package:e_commerce_app/widget/app_color.dart';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
@@ -23,19 +25,37 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // بيانات المنتجات (صور وأسعار)
   final List<Map<String, dynamic>> featuredProducts = [
-    {'image': 'assets/images/1.jpg', 'price': 29.99},
-    {'image': 'assets/images/2.jpg', 'price': 49.99},
-    {'image': 'assets/images/3.jpg', 'price': 19.99},
-    {'image': 'assets/images/4.jpg', 'price': 39.99},
-    {'image': 'assets/images/1.jpg', 'price': 29.99},
-    {'image': 'assets/images/2.jpg', 'price': 49.99},
-    {'image': 'assets/images/3.jpg', 'price': 19.99},
-    {'image': 'assets/images/4.jpg', 'price': 39.99},
-    {'image': 'assets/images/1.jpg', 'price': 29.99},
-    {'image': 'assets/images/2.jpg', 'price': 49.99},
-    {'image': 'assets/images/3.jpg', 'price': 19.99},
-    {'image': 'assets/images/4.jpg', 'price': 39.99},
+    {
+      'image': 'assets/images/1.jpg',
+      'name': 'Product 1',
+      'price': 29.99,
+      'quantity': 1,
+      'rating': 4.5
+    },
+    {
+      'image': 'assets/images/2.jpg',
+      'name': 'Product 2',
+      'price': 49.99,
+      'quantity': 1,
+      'rating': 4.0
+    },
+    {
+      'image': 'assets/images/3.jpg',
+      'name': 'Product 3',
+      'price': 19.99,
+      'quantity': 1,
+      'rating': 3.5
+    },
+    {
+      'image': 'assets/images/4.jpg',
+      'name': 'Product 4',
+      'price': 39.99,
+      'quantity': 1,
+      'rating': 4.8
+    },
   ];
+
+  List<Map<String, dynamic>> cartItems = [];
 
   @override
   Widget build(BuildContext context) {
@@ -48,13 +68,27 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             icon: const Icon(Icons.shopping_cart),
             onPressed: () {
-              // التنقل إلى سلة التسوق
+              // التنقل إلى سلة التسوق مع تمرير السلة
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => CartScreen(cartItems: cartItems),
+                ),
+              );
             },
           ),
           IconButton(
             icon: const Icon(Icons.person),
             onPressed: () {
               // التنقل إلى صفحة الملف الشخصي
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ProfileScreen(
+                    userName: widget.userName,
+                  ),
+                ),
+              );
             },
           ),
         ],
@@ -68,9 +102,12 @@ class _HomeScreenState extends State<HomeScreen> {
               options: CarouselOptions(
                 height: 200,
                 autoPlay: true,
-                enlargeCenterPage: true,
+                enlargeCenterPage: true, // يكبر الصورة المركزية
                 aspectRatio: 16 / 9,
                 autoPlayInterval: const Duration(seconds: 3),
+                autoPlayAnimationDuration:
+                    const Duration(milliseconds: 800), // مدة الانيميشين
+                scrollPhysics: BouncingScrollPhysics(), // تأثير الحواف
               ),
               items: bannerImages.map((image) {
                 return Container(
@@ -153,10 +190,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     itemCount: featuredProducts.length, // عدد المنتجات
                     itemBuilder: (context, index) {
-                      // تمرير الصورة والسعر لكل منتج
                       return _buildFeaturedProductCard(
                         featuredProducts[index]['image'],
+                        featuredProducts[index]['name'],
                         featuredProducts[index]['price'],
+                        featuredProducts[index]['quantity'],
+                        featuredProducts[index]['rating'],
+                        index,
                       );
                     },
                   ),
@@ -213,59 +253,74 @@ class _HomeScreenState extends State<HomeScreen> {
     }).toList();
   }
 
-  Widget _buildFeaturedProductCard(String imagePath, double price) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
-            child: Image.asset(
-              imagePath,
-              height: 120,
-              width: double.infinity,
-              fit: BoxFit.cover,
+  Widget _buildFeaturedProductCard(String imagePath, String name, double price,
+      int quantity, double rating, int index) {
+    return GestureDetector(
+      onTap: () {
+        // إضافة المنتج إلى السلة
+        setState(() {
+          cartItems.add({
+            'image': imagePath,
+            'name': name,
+            'price': price,
+            'quantity': 1,
+          });
+        });
+      },
+      child: Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(10)),
+              child: Image.asset(
+                imagePath,
+                height: 120,
+                width: double.infinity,
+                fit: BoxFit.cover,
+              ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Product Name',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '\$${price.toStringAsFixed(2)}',
-                  style: const TextStyle(
-                    color: Colors.green,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: const [
-                    Icon(Icons.star, color: Colors.amber, size: 16),
-                    Text(
-                      '4.5',
-                      style: TextStyle(fontSize: 12),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
                     ),
-                  ],
-                ),
-              ],
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '\$${price.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      color: Colors.green,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(Icons.star, color: Colors.amber, size: 16),
+                      Text(
+                        '$rating',
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
