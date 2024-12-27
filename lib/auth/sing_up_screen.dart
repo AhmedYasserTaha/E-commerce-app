@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // استيراد SharedPreferences
 
 class SingUpScreen extends StatefulWidget {
   const SingUpScreen({super.key});
@@ -100,7 +101,7 @@ class _SingUpScreenState extends State<SingUpScreen>
                       controller: password,
                       hintText: "Enter Password",
                       icon: Icons.password,
-                      obscureText: true,
+                      isPassword: true,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return "Password is required";
@@ -111,14 +112,12 @@ class _SingUpScreenState extends State<SingUpScreen>
                     const Gap(30),
                     CustomFormField(
                       controller: confirmPassword,
-                      hintText: "Confirm Password",
+                      hintText: "confirmPassword",
                       icon: Icons.password,
-                      obscureText: true,
+                      isPassword: true,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return "Confirm Password is required";
-                        } else if (value != password.text) {
-                          return "Passwords do not match";
+                          return "Password is required";
                         }
                         return null;
                       },
@@ -133,38 +132,21 @@ class _SingUpScreenState extends State<SingUpScreen>
               text: "Sign Up",
               onPressed: () async {
                 if (_formKey.currentState!.validate()) {
-                  showDialog(
-                    context: context,
-                    barrierDismissible: false,
-                    builder: (context) => Center(
-                      child: RotationTransition(
-                        turns: _controller,
-                        child: Image.asset(
-                          "assets/images/buy.png",
-                          width: 100,
-                          height: 100,
-                        ),
-                      ),
-                    ),
-                  );
+                  _showLoadingDialog(context); // عرض التحميل
 
                   try {
-                    await createAccount(
-                        context); // افترض أن دي الدالة اللي بتعمل إنشاء الحساب
+                    await createAccount(context);
 
-                    // لو تم إنشاء الحساب بنجاح، اغلق الـ dialog
+                    // إغلاق الـ dialog عند النجاح
                     Navigator.of(context).pop();
 
-                    // التوجيه للصفحة الرئيسية بعد تسجيل الحساب بنجاح
                     Navigator.of(context).pushReplacement(
                       MaterialPageRoute(
-                        builder: (context) =>
-                            HomeScreen(userName: name.text), // مرر الاسم هنا
+                        builder: (context) => HomeScreen(userName: name.text),
                       ),
                     );
                   } catch (e) {
-                    // لو في خطأ حصل، اعرض رسالة
-                    Navigator.of(context).pop(); // اغلق الـ dialog لو في خطأ
+                    Navigator.of(context).pop(); // إغلاق الـ dialog عند الخطأ
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('Error: ${e.toString()}')),
                     );
@@ -203,6 +185,29 @@ class _SingUpScreenState extends State<SingUpScreen>
     );
   }
 
+  void _showLoadingDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Center(
+        child: RotationTransition(
+          turns: _controller,
+          child: Image.asset(
+            "assets/images/buy.png",
+            width: 100,
+            height: 100,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // دالة لحفظ حالة تسجيل الدخول
+  Future<void> _saveLoginStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isLoggedIn', true); // تخزين حالة تسجيل الدخول
+  }
+
   Future<void> createAccount(BuildContext context) async {
     try {
       // إنشاء حساب جديد
@@ -215,13 +220,15 @@ class _SingUpScreenState extends State<SingUpScreen>
       User? user = FirebaseAuth.instance.currentUser;
       await user?.updateDisplayName(name.text);
 
-      Navigator.pop(context);
+      // حفظ اسم المستخدم وحالة الدخول
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('userName', name.text);
+      await prefs.setBool('isLoggedIn', true); // تخزين حالة تسجيل الدخول
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Signed up successfully!')),
       );
     } on FirebaseAuthException catch (e) {
-      Navigator.pop(context);
       String errorMessage;
       if (e.code == 'weak-password') {
         errorMessage = 'The password provided is too weak.';
@@ -234,7 +241,6 @@ class _SingUpScreenState extends State<SingUpScreen>
         SnackBar(content: Text(errorMessage)),
       );
     } catch (e) {
-      Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('An unexpected error occurred: $e')),
       );

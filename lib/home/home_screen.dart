@@ -1,8 +1,12 @@
+import 'package:e_commerce_app/auth/start_screen.dart';
 import 'package:e_commerce_app/cart/cart_screen.dart';
+import 'package:e_commerce_app/product/product_screen.dart';
 import 'package:e_commerce_app/profile/profile_screen.dart';
 import 'package:e_commerce_app/widget/app_color.dart';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import './categories_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -23,7 +27,6 @@ class _HomeScreenState extends State<HomeScreen> {
     'assets/images/5.jpg',
   ];
 
-  // بيانات المنتجات (صور وأسعار)
   final List<Map<String, dynamic>> featuredProducts = [
     {
       'image': 'assets/images/1.jpg',
@@ -63,12 +66,11 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         automaticallyImplyLeading: false,
         backgroundColor: AppColor.kMainColor,
-        title: Text('Welcome, ${widget.userName}'),
+        title: Text('Hello, ${widget.userName}'),
         actions: [
           IconButton(
             icon: const Icon(Icons.shopping_cart),
             onPressed: () {
-              // التنقل إلى سلة التسوق مع تمرير السلة
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -80,16 +82,18 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             icon: const Icon(Icons.person),
             onPressed: () {
-              // التنقل إلى صفحة الملف الشخصي
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => ProfileScreen(
-                    userName: widget.userName,
-                  ),
+                  builder: (context) =>
+                      ProfileScreen(userName: widget.userName),
                 ),
               );
             },
+          ),
+          IconButton(
+            icon: const Icon(Icons.exit_to_app), // أيقونة تسجيل الخروج
+            onPressed: _logout, // الاتصال بدالة تسجيل الخروج
           ),
         ],
       ),
@@ -97,17 +101,15 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Carousel Slider
             CarouselSlider(
               options: CarouselOptions(
                 height: 200,
                 autoPlay: true,
-                enlargeCenterPage: true, // يكبر الصورة المركزية
+                enlargeCenterPage: true,
                 aspectRatio: 16 / 9,
                 autoPlayInterval: const Duration(seconds: 3),
-                autoPlayAnimationDuration:
-                    const Duration(milliseconds: 800), // مدة الانيميشين
-                scrollPhysics: BouncingScrollPhysics(), // تأثير الحواف
+                autoPlayAnimationDuration: const Duration(milliseconds: 800),
+                scrollPhysics: BouncingScrollPhysics(),
               ),
               items: bannerImages.map((image) {
                 return Container(
@@ -123,8 +125,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 );
               }).toList(),
             ),
-
-            // Categories Section
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -163,8 +163,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
-
-            // Featured Products
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -188,7 +186,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       crossAxisSpacing: 20,
                       mainAxisSpacing: 10,
                     ),
-                    itemCount: featuredProducts.length, // عدد المنتجات
+                    itemCount: featuredProducts.length,
                     itemBuilder: (context, index) {
                       return _buildFeaturedProductCard(
                         featuredProducts[index]['image'],
@@ -209,18 +207,40 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('isLoggedIn'); // إزالة حالة تسجيل الدخول
+    FirebaseAuth.instance.signOut(); // تسجيل الخروج من Firebase
+
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (context) => StartScreen()),
+    );
+  }
+
   List<Widget> _buildCategoryItems() {
     final categories = [
       {'icon': Icons.laptop, 'name': 'Electronics'},
-      {'icon': Icons.chair, 'name': 'Furniture'},
+      {'icon': Icons.phone_iphone, 'name': 'Phone'},
       {'icon': Icons.person, 'name': 'Fashion'},
-      {'icon': Icons.sports_basketball, 'name': 'Sports'},
-      {'icon': Icons.book, 'name': 'Books'},
+      {'icon': Icons.sports_soccer, 'name': 'Sports'},
+      {'icon': Icons.headset_mic, 'name': 'Head Phone'},
+      {'icon': Icons.games_outlined, 'name': 'Games'},
+      {'icon': Icons.directions_car, 'name': 'Car'},
+      {'icon': Icons.chair, 'name': 'Furniture'},
     ];
 
     return categories.map((category) {
       return GestureDetector(
         onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ProductScreen(
+                categoryName: '', products: [],
+                // Pass the products list
+              ),
+            ),
+          );
           // التنقل إلى قائمة المنتجات في هذه الفئة
         },
         child: Container(
@@ -257,7 +277,6 @@ class _HomeScreenState extends State<HomeScreen> {
       int quantity, double rating, int index) {
     return GestureDetector(
       onTap: () {
-        // إضافة المنتج إلى السلة
         setState(() {
           cartItems.add({
             'image': imagePath,

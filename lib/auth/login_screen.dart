@@ -76,6 +76,11 @@ class _LoginScreenState extends State<LoginScreen>
     }
   }
 
+  _saveLoginStatus() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isLoggedIn', true); // تخزين حالة تسجيل الدخول
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -165,20 +170,25 @@ class _LoginScreenState extends State<LoginScreen>
                       });
 
                       try {
-                        await FirebaseAuth.instance.signInWithEmailAndPassword(
+                        // تسجيل الدخول باستخدام Firebase
+                        UserCredential userCredential = await FirebaseAuth
+                            .instance
+                            .signInWithEmailAndPassword(
                           email: emailController.text,
                           password: passwordController.text,
                         );
 
-                        // حفظ حالة التذكر
-                        _saveRememberMe();
+                        // الحصول على المستخدم الحالي
+                        User? user = userCredential.user;
 
-                        // جلب اسم المستخدم من Firebase
-                        String userName =
-                            FirebaseAuth.instance.currentUser?.displayName ??
-                                "Guest";
+                        // الحصول على اسم المستخدم أو عرض اسم افتراضي
+                        String userName = user?.displayName ?? "Guest";
 
-                        // التوجيه إلى HomeScreen مع تمرير الاسم
+                        // حفظ حالة تسجيل الدخول
+                        await _saveLoginStatus();
+                        await _saveRememberMe();
+
+                        // التوجيه إلى HomeScreen مع تمرير اسم المستخدم
                         Navigator.of(context).pushReplacement(
                           MaterialPageRoute(
                             builder: (context) =>
@@ -186,23 +196,34 @@ class _LoginScreenState extends State<LoginScreen>
                           ),
                         );
 
+                        // عرض رسالة نجاح
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                               content: Text('Logged in successfully')),
                         );
                       } on FirebaseAuthException catch (e) {
+                        // التعامل مع أخطاء تسجيل الدخول
+                        String errorMessage;
                         if (e.code == 'user-not-found') {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text('No user found for that email.')),
-                          );
+                          errorMessage = 'No user found for that email.';
                         } else if (e.code == 'wrong-password') {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text('Wrong password provided.')),
-                          );
+                          errorMessage = 'Wrong password provided.';
+                        } else {
+                          errorMessage = 'An error occurred. Please try again.';
                         }
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(errorMessage)),
+                        );
+                      } catch (e) {
+                        // التعامل مع الأخطاء غير المتوقعة
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                              content:
+                                  Text('An unexpected error occurred: $e')),
+                        );
                       } finally {
+                        // إيقاف مؤشر التحميل
                         setState(() {
                           isLoading = false;
                         });
